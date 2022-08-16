@@ -1,0 +1,104 @@
+---
+title: "Untitled"
+author: "na ryoung"
+date: "2022-08-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+```{r}
+df <- read.csv('./winequality-red.csv')
+str(df)
+# 결측치 확인
+sum(is.na(df))
+
+# df 이상치 확인
+nrow(df)
+
+boxplot(df)
+outlier <- boxplot.stats(df$total.sulfur.dioxide)$out
+df[df$total.sulfur.dioxide %in% outlier,] <- NA 
+df <- na.omit(df) # 결측치 삭제
+
+# 처리한 후
+nrow(df)
+
+# 품질별 레드와인 수
+barplot(table(df$quality),col='#880000',
+        main='Number of red wines by quality',ylab='count',xlab='quality')
+
+# 결과변수 정규성 확인
+shapiro.test(df$quality)
+
+# 독립변수별 상관관계
+library(corrgram)
+corrgram(df,order=TRUE,lower.panel = panel.shade,upper.panel = panel.cor,
+         text.panel = panel.txt, main="reds wine corrgram")
+
+cor.test(df$quality,df$alcohol)
+cor.test(df$quality,df$volatile.acidity)
+
+par(mfrow=c(1,2))
+boxplot(df$alcohol~df$quality,col=terrain.colors(6),
+        main = 'Alcohol of red wines by quality',
+        xlab = 'quality', ylab = 'alcohol')
+boxplot(df$volatile.acidity~df$quality,col=terrain.colors(6),
+        main = 'Volatile acidity of red wines by quality',
+        xlab = 'quality', ylab = 'volatile acidity')
+par(mfrow=c(1,1))
+
+"# alcohol 이상치 확인
+outlier <- boxplot.stats(df$alcohol)$out
+df[df$alcohol %in% outlier,] <- NA 
+df <- na.omit(df) # 결측치 삭제
+
+boxplot(df$alcohol~df$quality,col=terrain.colors(6),
+        main = 'Alcohol of red wines by quality',
+        xlab = 'quality', ylab = 'alcohol')"
+
+# 이항로지스틱회귀분석
+df$is.quality <- factor(ifelse(df$quality>=7,'Yes','No'))
+barplot(table(df$is.quality),col='#880000')
+df <- df[,-12] # 원래 있던 거 삭제
+
+model <- glm(is.quality ~ .,data=df,family = binomial(link='logit'))
+summary(model)
+
+df$pred <- factor(ifelse(model$fitted.values > 0.5,'Yes','No'))
+
+# 혼동행렬
+tab <- table(df$is.quality,df$pred)
+tab
+
+# 정확도 계산
+accurancy <- sum(tab[1,1]+tab[2,2])/sum(tab)
+accurancy
+
+library(pROC)
+roc(is.quality~ model$fitted.values,data=df,plot=TRUE,
+    main='ROC CURVE',col='tomato')
+
+re.model <- step(model,direction = 'backward')
+summary(re.model)
+
+df$pred2 <- factor(ifelse(re.model$fitted.values > 0.5,'Yes','No'))
+
+# 혼동행렬
+tab <- table(df$is.quality,df$pred2)
+tab
+
+# 정확도 계산
+accurancy <- sum(tab[1,1]+tab[2,2])/sum(tab)
+accurancy
+
+roc(is.quality~ re.model$fitted.values,data=df,plot=TRUE,AUC=T,
+    main='ROC CURVE',col='tomato')
+
+odds <- exp(cbind(OR=coef(model),confint(model)))
+odds
+
+```
