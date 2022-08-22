@@ -1,0 +1,23 @@
+library(shiny)
+
+ui <- fluidPage(
+  headerPanel(
+    h2('호텔 예약/취소 현황')
+  ),
+  sidebarPanel(
+    selectInput('select', 'select', 
+                list('월별' = 'month', '나라별' = 'country'))
+  ),
+  mainPanel(
+    mainPanel(
+      tabsetPanel(
+        tabPanel('Plot', plotOutput("plot1"))
+      ))
+  )
+)
+
+server <- function(input, output) {
+  
+}
+
+shinyApp(ui = ui, server = server)

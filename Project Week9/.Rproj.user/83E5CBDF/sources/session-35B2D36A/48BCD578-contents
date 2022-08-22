@@ -1,0 +1,39 @@
+library(gapminder)
+library(gganimate)
+
+p <- ggplot(
+  gapminder, 
+  aes(x = gdpPercap, y=lifeExp, size = pop, colour = country)) +
+  geom_point(show.legend = FALSE, alpha = 0.7) +
+  scale_color_viridis_d() + #점의 파레트 설정
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() + #x축 로그 스케일로 설정
+  labs(x = "GDP per capita", y = "Life expectancy")
+p
+(q <- p + transition_time(year) +
+    labs(title = "Year: {frame_time}"))
+q
+library(gifski)
+library(png)
+animate(q, duration = 10, 
+        fps = 20, 
+        width = 400, 
+        height = 400, 
+        renderer = gifski_renderer())
+
+
+
+
+library(fmsb)
+
+set.seed(99)
+data <- as.data.frame(matrix( sample( 0:20 , 15 , replace=F) , ncol=5))
+colnames(data) <- c("math" , "english" , "biology" , "music" , "R-coding" )
+data
+rownames(data) <- paste("mister" , letters[1:3] , sep="-")
+data
+# To use the fmsb package, I have to add 2 lines to the dataframe: the max and min of each variable to show on the plot!
+data <- rbind(rep(20,5) , rep(0,5) , data)
+data
+# plot with default options:
+radarchart(data)
